@@ -1,26 +1,35 @@
 package edu.classproject.dispatch;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class DispatchServiceImpl implements DispatchService {
 
+    private final PartnerRepository repository;
+
+    // Constructor injection
+    public DispatchServiceImpl(PartnerRepository repository) {
+        this.repository = repository;
+    }
+
     @Override
     public DispatchAssignment assignPartner(String orderId, String restaurantId, String customerId) {
 
-        if (orderId == null || orderId.isEmpty()) {
+        if (orderId == null || orderId.trim().isEmpty()) {
             return new DispatchAssignment(null, orderId, null, "Invalid order");
         }
 
-        List<String> partners = List.of("driver1","driver2");
+        Optional<String> partnerOpt = repository.findAvailablePartner();
 
-        if (partners.isEmpty()) {
+        if (partnerOpt.isEmpty()) {
             return new DispatchAssignment(null, orderId, null, "No delivery partner available");
         }
 
-        String partnerId = partners.get(0);
+        String partnerId = partnerOpt.get();
 
         String assignmentId = UUID.randomUUID().toString();
+
+        repository.markUnavailable(partnerId);
 
         return new DispatchAssignment(
                 assignmentId,
